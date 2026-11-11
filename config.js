@@ -7,7 +7,7 @@
  */
 window.DASHBOARD_CONFIG = {
   dataMode: 'googleSheetsCsv',
-  googleSheetCsvUrl: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQFxNS7wK9oZ_k41Xq8-TpBPkHp6hnl7UGDzCdS2t44Fgyrh2voyfsqNv9Z6Yw58A/pub?output=csv',
+  googleSheetCsvUrl: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS454sTUgu2pbCzVuiDT5XJy6H5ObSGVzBdYbcXT_lbOlg2Ov8CNZ0Vk-fWLFXqcZ4aHee34YA-jl4C/pub?output=csv',
   refreshIntervalMs: 5 * 60 * 1000,
   // Sri Lanka NSDI ArcGIS district-boundary layer. The map still works for
   // approximate district-centre navigation if this external service is offline.
