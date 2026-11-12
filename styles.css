@@ -5,3 +5,12 @@
 @media(max-width:1000px){.dashboard-grid{grid-template-columns:1fr}.right-stack{grid-template-columns:1fr 1fr;grid-template-rows:auto}.map-stage{height:455px}.kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.safety-grid{grid-template-columns:1fr}.map-focused .right-stack{display:none}}
 @media(max-width:720px){.sidebar{width:min(290px,86vw);transform:translateX(-110%);transition:transform .2s ease;box-shadow:12px 0 35px #192D6733}.sidebar.open{transform:translateX(0)}.mobile-scrim.show{display:block;position:fixed;inset:0;background:#15275899;z-index:450}.workspace{margin-left:0}.topbar{height:62px;padding:0 17px}.mobile-menu,.close-mobile{display:grid!important}.close-mobile{margin-left:auto;color:#E0E8FC}.breadcrumb{font-size:10px}.topbar-status{display:none}.page{padding:24px 17px 40px}.page-heading{align-items:flex-start}.headline-art{display:none}.page-heading h1{font-size:29px;letter-spacing:-1.2px}.notice-status{display:none}.dashboard-grid{gap:12px}.kpi-grid{gap:10px}.kpi-card{padding:16px}.kpi-value{font-size:25px}.kpi-label{min-height:36px}.kpi-foot{font-size:9px}.map-panel{padding:15px}.map-stage{height:440px}.panel-top h2{font-size:16px}.right-stack{grid-template-columns:1fr;gap:12px}.bottom-grid{grid-template-columns:1fr;gap:12px}.district-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.district-choice{padding:15px 12px}.directory-tools{flex-direction:column}.directory-tools select,.search-wrap{max-width:none}.subpage-heading h1{font-size:26px}.about-layout{grid-template-columns:1fr}.footer{flex-direction:column;padding:18px 17px 28px}.map-legend{gap:11px}.map-footnote{font-size:9px}.map-focused .map-stage{height:65vh}}
 @media(max-width:420px){.kpi-card{padding:13px}.kpi-label{font-size:10px}.map-filters{gap:7px}.reset-btn{font-size:0;padding:10px}.reset-btn .ico{width:18px;height:18px}.legend-title{flex-basis:100%}.map-legend label{font-size:10px}.district-grid{grid-template-columns:1fr}}
+
+
+/* Institutional banner: preserve the uploaded PNG's aspect ratio and legibility. */
+.institution-banner{background:#fff;border-bottom:1px solid var(--line);display:flex;justify-content:center;align-items:center;padding:10px clamp(12px,2.5vw,32px);overflow:hidden}
+.institution-banner img{display:block;width:100%;height:auto;max-width:1301px;object-fit:contain}
+@media(max-width:720px){
+  .institution-banner{justify-content:flex-start;overflow-x:auto;overscroll-behavior-inline:contain;padding:8px 12px;scrollbar-width:thin}
+  .institution-banner img{width:760px;max-width:none;flex:0 0 760px;height:auto}
+}
