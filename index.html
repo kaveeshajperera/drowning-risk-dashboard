@@ -86,7 +86,7 @@
 
       <div class="map-searchbar">
         <button type="button" id="toggle-panel" class="map-tool menu-control" aria-label="Open locations panel" aria-expanded="false" aria-controls="info-panel"><svg class="icon"><use href="#ic-menu"/></svg></button>
-        <label class="map-search" for="map-search"><svg class="icon"><use href="#ic-search"/></svg><input id="map-search" type="search" autocomplete="off" placeholder="Search locations, districts, MOH areas…" aria-label="Search risk locations and districts"/><span class="search-shortcut" aria-hidden="true">⌘ K</span></label>
+        <label class="map-search" for="map-search"><svg class="icon"><use href="#ic-search"/></svg><input id="map-search" type="search" autocomplete="off" placeholder="Search town, village or risk location…" aria-label="Search towns, villages, districts and risk sites"/><span class="search-shortcut" aria-hidden="true">⌘ K</span></label>
         <button type="button" id="clear-search" class="map-tool clear-search" aria-label="Clear search" hidden><svg class="icon"><use href="#ic-close"/></svg></button>
       </div>
 
@@ -108,6 +108,10 @@
         <label class="switch-row"><span><i class="swatch low"></i> Reported lower-risk</span><input type="checkbox" id="filter-low"/></label>
         <label class="switch-row"><span><i class="swatch unknown"></i> Unclassified</span><input type="checkbox" id="filter-unknown"/></label>
         <label class="switch-row"><span><span aria-hidden="true">🐊</span> Crocodile warnings</span><input type="checkbox" id="filter-croc" checked/></label>
+        <div class="basemap-divider"></div>
+        <div class="basemap-heading">Navigation landmarks</div>
+        <button class="nearby-load-btn" id="load-nearby-places" type="button">Show nearby restaurants &amp; landmarks</button>
+        <p class="poi-help" id="nearby-places-status">Zoom in to a neighbourhood (level 15+), then load nearby places. Labels come from OpenStreetMap, not Google Maps.</p>
         <p class="popover-foot">Lower-risk does not mean safe for swimming. Risk categories reflect district reports.</p>
       </section>
 
@@ -198,7 +202,7 @@
           <div class="report-footer"><button type="button" class="outline-btn" id="copy-report"><svg class="icon"><use href="#ic-copy"/></svg> Copy details</button><button type="button" class="primary-btn" id="submit-report">Continue to reporting form <svg class="icon"><use href="#ic-arrow"/></svg></button></div>
         </div>
       </div>
-      <div class="map-pick-notice" id="map-pick-notice" hidden><span>Zoom in to locate the water body, then tap to place your pin. Use Road view for more place and road names.</span><div class="pick-actions"><button type="button" id="pick-map-style">Road view</button><button type="button" id="cancel-picking">Cancel</button></div></div>
+      <div class="map-pick-notice" id="map-pick-notice" hidden><span>Find a village or landmark, zoom in, then tap the exact water body. Use nearby places or Google Maps for reference.</span><div class="pick-actions"><button type="button" id="pick-map-style">Road view</button><button type="button" id="pick-nearby-places">Nearby places</button><button type="button" id="pick-open-google-maps">Google Maps</button><button type="button" id="cancel-picking">Cancel</button></div></div>
       <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
     </main>
   </div>
