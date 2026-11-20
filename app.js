@@ -10,7 +10,7 @@
   const districtNames = districts.map(d => d.name);
   const state = {
     district: '', search: '', rows: [], dataLoaded: false, error: false, lastSuccess: null,
-    map: null, mapReady: false, basemapLayer: null, placeLabelLayer: null, activeBasemap: 'satellite', boundaryLayer: null, markerLayer: null, selected: null,
+    map: null, mapReady: false, basemapLayer: null, placeLabelLayer: null, placeNames: [], activeBasemap: 'satellite', boundaryLayer: null, markerLayer: null, selected: null,
     high: true, low: false, unknown: false, crocodile: true, shown: 50,
     pane: 'browse', panelOpen: false, picking: false, reportLocationId: '', reportPoint: null,
     reportPin: null, userPin: null, toastTimer: null
@@ -183,6 +183,68 @@
     }
   };
 
+  const prominentTownNames = new Set([
+    'Colombo','Kandy','Galle','Jaffna','Gampaha','Negombo','Dehiwala',
+    'Moratuwa','Kalutara','Ratnapura','Matara','Hambantota','Trincomalee',
+    'Batticaloa','Ampara','Anuradhapura','Polonnaruwa','Kurunegala','Puttalam',
+    'Badulla','Nuwara Eliya','Matale','Kegalle','Monaragala','Mannar',
+    'Vavuniya','Kilinochchi','Mullaitivu','Panadura','Beruwala',
+    'Piliyandala','Maharagama','Homagama','Kadawatha','Ja-Ela','Wattala',
+    'Katunayake','Avissawella','Gampola','Nawalapitiya','Peradeniya',
+    'Hatton','Talawakele','Haputale','Bandarawela','Ella','Tangalle',
+    'Ambalangoda','Hikkaduwa','Weligama','Dambulla','Sigiriya',
+    'Chilaw','Kuliyapitiya','Nikaweratiya','Kataragama','Tissamaharama',
+    'Kalmunai','Akkaraipattu','Kattankudy','Eravur','Point Pedro'
+  ]);
+
+  async function loadPlaceNames() {
+    try {
+      const response = await fetch('./data/sri-lanka-place-labels.json');
+      if (!response.ok) throw new Error('Local place names unavailable');
+      const rows = await response.json();
+      state.placeNames = rows.filter(r => Array.isArray(r) && typeof r[0] === 'string'
+        && Number.isFinite(r[1]) && Number.isFinite(r[2]));
+      renderModernLabels();
+    } catch (error) {
+      console.warn('Local place labels unavailable; satellite imagery remains available.', error);
+    }
+  }
+
+  function renderModernLabels() {
+    if (!state.mapReady || !state.placeLabelLayer || !state.placeNames.length
+        || state.activeBasemap !== 'satellite') return;
+    const map = state.map;
+    const zoom = map.getZoom();
+    const bounds = map.getBounds().pad(0.13);
+    const cellX = zoom <= 9 ? 135 : zoom <= 11 ? 116 : 100;
+    const cellY = zoom <= 9 ? 52 : 39;
+    const used = new Set();
+    state.placeLabelLayer.clearLayers();
+
+    const candidates = state.placeNames
+      .filter(r => bounds.contains([r[1], r[2]]))
+      .filter(r => zoom >= 9 || prominentTownNames.has(r[0]))
+      .sort((a,b) => Number(prominentTownNames.has(b[0])) - Number(prominentTownNames.has(a[0])));
+    let count = 0;
+    for (const r of candidates) {
+      if (count >= 150) break;
+      const pt = map.latLngToContainerPoint([r[1],r[2]]);
+      const cx = Math.floor(pt.x/cellX), cy = Math.floor(pt.y/cellY);
+      const key = cx + ':' + cy;
+      if (used.has(key)) continue;
+      used.add(key);
+      const major = prominentTownNames.has(r[0]);
+      const icon = window.L.divIcon({
+        className:'place-label-anchor',
+        html:'<span class="modern-place-label ' + (major?'major':'minor') + '">' + esc(r[0]) + '</span>',
+        iconSize:[0,0],iconAnchor:[0,0]
+      });
+      window.L.marker([r[1],r[2]],{icon,pane:'placeLabels',interactive:false,keyboard:false})
+        .addTo(state.placeLabelLayer);
+      count++;
+    }
+  }
+
   function setMapBackground(mode) {
     const definition = mapBackgrounds[mode];
     if (!definition || !state.mapReady) return;
@@ -192,8 +254,8 @@
     state.activeBasemap = mode;
     layer.addTo(state.map);
     layer.bringToBack();
-    // Place labels are a separate transparent reference layer over satellite imagery.
-    // This keeps towns and city names visible without hiding river or reservoir imagery.
+    // Lightweight local labels: HTML typography, not pre-rendered raster text.
+    // Town coordinates are from an attributed Sri Lankan locality dataset.
     if (state.placeLabelLayer) {
       state.map.removeLayer(state.placeLabelLayer);
       state.placeLabelLayer = null;
@@ -201,17 +263,11 @@
     if (mode === 'satellite') {
       if (!state.map.getPane('placeLabels')) {
         const labelsPane = state.map.createPane('placeLabels');
-        labelsPane.style.zIndex = '350'; // Above imagery, below risk markers and boundaries.
+        labelsPane.style.zIndex = '350';
         labelsPane.style.pointerEvents = 'none';
       }
-      state.placeLabelLayer = window.L.tileLayer(
-        'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
-        {
-          pane: 'placeLabels',
-          maxZoom: 19,
-          attribution: 'Place names &copy; Esri and contributors'
-        }
-      ).addTo(state.map);
+      state.placeLabelLayer = window.L.layerGroup().addTo(state.map);
+      renderModernLabels();
     }
     document.querySelectorAll('input[name="basemap"]').forEach(input => {
       input.checked = input.value === mode;
@@ -226,6 +282,8 @@
     const map = L.map('risk-map', {zoomControl:false,minZoom:6,maxZoom:18,preferCanvas:true}).setView([7.86,80.77],7);
     state.map = map; state.mapReady = true;
     setMapBackground('satellite');
+    map.on('moveend zoomend', renderModernLabels);
+    loadPlaceNames();
     L.control.zoom({position:'bottomright'}).addTo(map);
     state.markerLayer = typeof L.markerClusterGroup === 'function' ? L.markerClusterGroup({showCoverageOnHover:false,chunkedLoading:true,maxClusterRadius:44,disableClusteringAtZoom:14,iconCreateFunction(cluster) {
       return L.divIcon({html:`<div>${cluster.getChildCount()}</div>`,className:'risk-cluster',iconSize:[41,41]});
