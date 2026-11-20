@@ -10,7 +10,7 @@
   const districtNames = districts.map(d => d.name);
   const state = {
     district: '', search: '', rows: [], dataLoaded: false, error: false, lastSuccess: null,
-    map: null, mapReady: false, boundaryLayer: null, markerLayer: null, selected: null,
+    map: null, mapReady: false, basemapLayer: null, activeBasemap: 'satellite', boundaryLayer: null, markerLayer: null, selected: null,
     high: true, low: false, unknown: false, crocodile: true, shown: 50,
     pane: 'browse', panelOpen: false, picking: false, reportLocationId: '', reportPoint: null,
     reportPin: null, userPin: null, toastTimer: null
@@ -159,14 +159,50 @@
     el.querySelector('small').textContent = error ? 'Try refreshing or checking your internet connection.' : 'Connecting to mapping services…';
     el.querySelector('.spinner').hidden = error;
   }
+  const mapBackgrounds = {
+    satellite: {
+      url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+      options: {
+        maxZoom: 19,
+        attribution: 'Imagery &copy; Esri, Vantor, Earthstar Geographics and the GIS User Community'
+      }
+    },
+    terrain: {
+      url: 'https://tile.openmaps.fr/opentopomap/{z}/{x}/{y}.png',
+      options: {
+        maxZoom: 19, maxNativeZoom: 17,
+        attribution: '<a href="https://github.com/sletuffe/OpenTopoMap">&copy; OpenTopoMap-R</a> <a href="https://openmaps.fr/donate">♥ Donation</a> <a href="https://www.openstreetmap.org/copyright">&copy; OpenStreetMap</a>'
+      }
+    },
+    road: {
+      url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+      options: {
+        maxZoom: 19,
+        attribution: config.tileAttribution || '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      }
+    }
+  };
+
+  function setMapBackground(mode) {
+    const definition = mapBackgrounds[mode];
+    if (!definition || !state.mapReady) return;
+    const layer = window.L.tileLayer(definition.url, definition.options);
+    if (state.basemapLayer) state.map.removeLayer(state.basemapLayer);
+    state.basemapLayer = layer;
+    state.activeBasemap = mode;
+    layer.addTo(state.map);
+    layer.bringToBack();
+    document.querySelectorAll('input[name="basemap"]').forEach(input => {
+      input.checked = input.value === mode;
+    });
+  }
+
   function initMap() {
     if (!window.L) { mapMessage('Map library could not be loaded', true); return; }
     const L = window.L;
     const map = L.map('risk-map', {zoomControl:false,minZoom:6,maxZoom:18,preferCanvas:true}).setView([7.86,80.77],7);
     state.map = map; state.mapReady = true;
-    L.tileLayer(config.tileUrl || 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom:19, subdomains:'abc', attribution:config.tileAttribution || '&copy; OpenStreetMap contributors'
-    }).addTo(map);
+    setMapBackground('satellite');
     L.control.zoom({position:'bottomright'}).addTo(map);
     state.markerLayer = typeof L.markerClusterGroup === 'function' ? L.markerClusterGroup({showCoverageOnHover:false,chunkedLoading:true,maxClusterRadius:44,disableClusteringAtZoom:14,iconCreateFunction(cluster) {
       return L.divIcon({html:`<div>${cluster.getChildCount()}</div>`,className:'risk-cluster',iconSize:[41,41]});
@@ -453,6 +489,9 @@
     $('#back-from-about').addEventListener('click',()=>setPanel(true,'browse'));
     $('#header-about').addEventListener('click',()=>{closePopovers();setPanel(true,'about');});
     $('#layers-toggle').addEventListener('click',()=>togglePopover('#layer-popover','#layers-toggle'));
+    document.querySelectorAll('input[name="basemap"]').forEach(input => input.addEventListener('change', () => {
+      if (input.checked) setMapBackground(input.value);
+    }));
     $('#stats-toggle').addEventListener('click',()=>togglePopover('#stats-popover','#stats-toggle'));
     $$('[data-hide-popover]').forEach(el=>el.addEventListener('click',closePopovers));
     $('#reset-view').addEventListener('click',()=>{chooseDistrict('');resetSearch();setPanel(false);});
