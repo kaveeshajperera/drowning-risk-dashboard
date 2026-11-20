@@ -9,7 +9,30 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoTZO3Umdr4e9o=" crossorigin="anonymous" />
+  <!-- Essential positioning fallback if the third-party Leaflet stylesheet is blocked. -->
+  <style>
+    .leaflet-container{position:relative;overflow:hidden;outline:0;touch-action:pan-x pan-y;background:#d5e1e6}
+    .leaflet-pane,.leaflet-tile,.leaflet-marker-icon,.leaflet-marker-shadow,.leaflet-tile-container,.leaflet-layer,.leaflet-zoom-box,.leaflet-image-layer,.leaflet-shadow-pane img,.leaflet-overlay-pane svg,.leaflet-overlay-pane canvas{position:absolute;left:0;top:0}
+    .leaflet-map-pane{z-index:auto}
+    .leaflet-tile-pane{z-index:200}
+    .leaflet-overlay-pane{z-index:400}
+    .leaflet-shadow-pane{z-index:500}
+    .leaflet-marker-pane{z-index:600}
+    .leaflet-tooltip-pane{z-index:650}
+    .leaflet-popup-pane{z-index:700}
+    .leaflet-tile{visibility:inherit;max-width:none!important;max-height:none!important}
+    .leaflet-tile-loaded{visibility:inherit}
+    .leaflet-zoom-animated{transform-origin:0 0}
+    .leaflet-control{position:relative;z-index:800;pointer-events:auto}
+    .leaflet-top,.leaflet-bottom{position:absolute;z-index:1000;pointer-events:none}
+    .leaflet-top{top:0}.leaflet-bottom{bottom:0}.leaflet-left{left:0}.leaflet-right{right:0}
+    .leaflet-top .leaflet-control{margin-top:10px}.leaflet-bottom .leaflet-control{margin-bottom:10px}
+    .leaflet-left .leaflet-control{float:left;clear:both;margin-left:10px}
+    .leaflet-right .leaflet-control{float:right;clear:both;margin-right:10px}
+    .leaflet-control-attribution{background:rgba(255,255,255,.8);padding:0 5px;font-size:10px}
+    .leaflet-control-zoom a{display:block;text-align:center;width:30px;height:30px;line-height:30px;text-decoration:none;background:#fff;color:#243B83}
+  </style>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.css" />
   <link rel="stylesheet" href="./styles.css" />
