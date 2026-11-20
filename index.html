@@ -1,127 +1,176 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#243B83">
-  <meta name="description" content="National Drowning Risk Mapping Dashboard — a district-level water safety and risk location mapping prototype for Sri Lanka.">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#243B83" />
+  <meta name="description" content="Explore district-reported drowning risk areas across Sri Lanka and suggest locations for review by the Injury Prevention & Control Unit." />
   <title>National Drowning Risk Mapping Dashboard | Sri Lanka</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous">
-  <link rel="stylesheet" href="./styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoTZO3Umdr4e9o=" crossorigin="anonymous" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.css" />
+  <link rel="stylesheet" href="./styles.css" />
   <script defer src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="anonymous"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"></script>
   <script defer src="./config.js"></script>
   <script defer src="./districts.js"></script>
   <script defer src="./app.js"></script>
 </head>
 <body>
-  <svg aria-hidden="true" class="svg-sprite" xmlns="http://www.w3.org/2000/svg">
-    <symbol id="i-wave" viewBox="0 0 24 24"><path d="M2 13c2.2 0 2.2-2 4.4-2s2.2 2 4.4 2 2.2-2 4.4-2 2.2 2 4.4 2S21.8 11 22 11M2 18c2.2 0 2.2-2 4.4-2s2.2 2 4.4 2 2.2-2 4.4-2 2.2 2 4.4 2S21.8 16 22 16M3 7c3-2 5-2 8 0s5 2 10 0"/></symbol>
-    <symbol id="i-home" viewBox="0 0 24 24"><path d="m3 10 9-7 9 7v10H3z"/><path d="M9 20v-7h6v7"/></symbol>
-    <symbol id="i-map" viewBox="0 0 24 24"><path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3z"/><path d="M9 3v15M15 6v15"/></symbol>
-    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></symbol>
-    <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></symbol>
-    <symbol id="i-list" viewBox="0 0 24 24"><path d="M9 6h12M9 12h12M9 18h12M4 6h.01M4 12h.01M4 18h.01"/></symbol>
-    <symbol id="i-shield" viewBox="0 0 24 24"><path d="m12 22 8-4V6l-8-4-8 4v12z"/><path d="m9 12 2 2 4-4"/></symbol>
-    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></symbol>
-    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></symbol>
-    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
-    <symbol id="i-reset" viewBox="0 0 24 24"><path d="M3 11a9 9 0 1 1 2.7 6.4M3 4v7h7"/></symbol>
-    <symbol id="i-expand" viewBox="0 0 24 24"><path d="M8 3H3v5M16 3h5v5M3 16v5h5M21 16v5h-5"/></symbol>
-    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
-    <symbol id="i-close" viewBox="0 0 24 24"><path d="m5 5 14 14M19 5 5 19"/></symbol>
-    <symbol id="i-chart" viewBox="0 0 24 24"><path d="M3 20h18M6 17V9M12 17V4M18 17v-7"/></symbol>
-    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M4 12h16m-6-6 6 6-6 6"/></symbol>
-    <symbol id="i-alert" viewBox="0 0 24 24"><path d="m12 3 10 18H2zM12 9v5m0 3h.01"/></symbol>
-    <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18"/></symbol>
+  <svg class="svg-icons" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <symbol id="ic-waves" viewBox="0 0 24 24"><path d="M2 7c2 0 2-2 4-2s2 2 4 2 2-2 4-2 2 2 4 2 2-2 4-2M2 13c2 0 2-2 4-2s2 2 4 2 2-2 4-2 2 2 4 2 2-2 4-2M2 19c2 0 2-2 4-2s2 2 4 2 2-2 4-2 2 2 4 2 2-2 4-2"/></symbol>
+    <symbol id="ic-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+    <symbol id="ic-close" viewBox="0 0 24 24"><path d="M5 5l14 14M19 5 5 19"/></symbol>
+    <symbol id="ic-search" viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.8"/><path d="M16 16l4.5 4.5"/></symbol>
+    <symbol id="ic-filter" viewBox="0 0 24 24"><path d="M3 7h18M7 12h10M10 17h4M6 4v6M16 9v6M12 15v5"/></symbol>
+    <symbol id="ic-layers" viewBox="0 0 24 24"><path d="m12 2 10 6-10 6L2 8l10-6Zm-10 11 10 6 10-6M2 18l10 6 10-6"/></symbol>
+    <symbol id="ic-pin" viewBox="0 0 24 24"><path d="M20 10c0 5.8-8 12-8 12S4 15.8 4 10a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></symbol>
+    <symbol id="ic-plus" viewBox="0 0 24 24"><path d="M12 4v16M4 12h16"/></symbol>
+    <symbol id="ic-arrow" viewBox="0 0 24 24"><path d="m5 12 14 0m-6-6 6 6-6 6"/></symbol>
+    <symbol id="ic-back" viewBox="0 0 24 24"><path d="m19 12-14 0m6-6-6 6 6 6"/></symbol>
+    <symbol id="ic-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></symbol>
+    <symbol id="ic-chart" viewBox="0 0 24 24"><path d="M3 20h18M6 17v-6m6 6V4m6 13v-9"/></symbol>
+    <symbol id="ic-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r=".8"/></symbol>
+    <symbol id="ic-reset" viewBox="0 0 24 24"><path d="M3 11a9 9 0 1 1 2.7 6.4M3 4v7h7"/></symbol>
+    <symbol id="ic-check" viewBox="0 0 24 24"><path d="m5 12 5 5L20 7"/></symbol>
+    <symbol id="ic-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></symbol>
+    <symbol id="ic-chevron" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+    <symbol id="ic-shield" viewBox="0 0 24 24"><path d="m12 2 8 4v6c0 5-3 8-8 10-5-2-8-5-8-10V6z"/><path d="m9 12 2 2 4-4"/></symbol>
   </svg>
-  <a class="skip-link" href="#main-content">Skip to main content</a>
-  <div class="shell">
-    <aside class="sidebar" id="sidebar">
-      <div class="brand">
-        <div class="brand-mark"><svg class="ico"><use href="#i-wave"/></svg></div>
-        <div class="brand-copy"><strong>Water Safety</strong><span>SRI LANKA</span></div>
-        <button type="button" class="close-mobile icon-btn" id="close-sidebar" aria-label="Close navigation"><svg class="ico"><use href="#i-close"/></svg></button>
-      </div>
-      <div class="sidebar-caption">NATIONAL DASHBOARD</div>
-      <nav aria-label="Main navigation" class="nav-list">
-        <button type="button" class="nav-link is-active" data-view="overview"><svg class="ico"><use href="#i-home"/></svg><span>Overview</span></button>
-        <button type="button" class="nav-link" data-view="risk-map"><svg class="ico"><use href="#i-map"/></svg><span>Risk Area Map</span></button>
-        <button type="button" class="nav-link" data-view="districts"><svg class="ico"><use href="#i-grid"/></svg><span>District Explorer</span></button>
-        <button type="button" class="nav-link" data-view="locations"><svg class="ico"><use href="#i-list"/></svg><span>Location Directory</span></button>
-      </nav>
-      <div class="sidebar-caption second-caption">INFORMATION</div>
-      <nav aria-label="Information navigation" class="nav-list">
-        <button type="button" class="nav-link" data-view="safety"><svg class="ico"><use href="#i-shield"/></svg><span>Water Safety</span></button>
-        <button type="button" class="nav-link" data-view="about"><svg class="ico"><use href="#i-info"/></svg><span>About & Sources</span></button>
-      </nav>
-      <div class="sidebar-bottom">
-        <div class="unit-emblem"><svg class="ico"><use href="#i-shield"/></svg></div>
-        <p><strong>Injury Prevention & Control Unit</strong><br>Directorate of Non-Communicable Diseases<br>Ministry of Health, Sri Lanka</p>
-        <span class="prototype-tag">Development prototype</span>
-      </div>
-    </aside>
-    <div class="mobile-scrim" id="mobile-scrim" hidden></div>
-    <div class="workspace">
-      <div class="institution-banner" aria-label="Institutional header banner">
-        <img src="./logo.png" alt="Ministry of Health and Injury Prevention institutional header" width="1301" height="133" decoding="async">
-      </div>
-      <!-- The large institutional banner remains unchanged on desktops.
-           A compact version improves logo/text legibility on small screens. -->
-      <div class="mobile-institution" aria-label="Directorate of Non Communicable Diseases, Ministry of Health, Sri Lanka">
-        <div class="mobile-institution-crest" aria-hidden="true"></div>
-        <div class="mobile-institution-text">
-          <strong>Directorate of Non-Communicable Diseases</strong>
-          <span>Ministry of Health · Sri Lanka</span>
+
+  <div class="site" id="site">
+    <header class="site-header">
+      <div class="identity" aria-label="Ministry of Health, Sri Lanka">
+        <div class="identity-mark"><svg class="icon"><use href="#ic-waves"/></svg></div>
+        <div class="identity-text">
+          <span class="identity-kicker">MINISTRY OF HEALTH · SRI LANKA</span>
+          <h1>National Drowning Risk Mapping Dashboard</h1>
+          <span class="identity-subtitle">Injury Prevention &amp; Control Unit · Directorate of NCDs</span>
         </div>
-        <div class="mobile-institution-family" aria-hidden="true"></div>
       </div>
-      <header class="topbar">
-        <div class="topbar-left">
-          <button type="button" class="icon-btn mobile-menu" id="open-sidebar" aria-label="Open navigation"><svg class="ico"><use href="#i-menu"/></svg></button>
-          <div class="breadcrumb">Directorate of NCD <span>/</span> <strong id="breadcrumb-current">Overview</strong></div>
+      <div class="header-actions">
+        <span class="connection-status" id="connection-status" role="status"><span class="live-dot"></span><span id="connection-text">Connecting data</span></span>
+        <button class="header-link" type="button" id="header-about"><svg class="icon"><use href="#ic-info"/></svg><span>About</span></button>
+      </div>
+    </header>
+
+    <main class="map-viewport" id="map-viewport">
+      <div id="risk-map" role="region" aria-label="Interactive map of Sri Lanka showing reported drowning risk locations"></div>
+      <div class="map-veil" id="map-veil" role="status"><span class="spinner"></span><strong>Preparing the risk map</strong><small>Connecting to map services…</small></div>
+
+      <div class="map-searchbar">
+        <button type="button" id="toggle-panel" class="map-tool menu-control" aria-label="Open locations panel" aria-expanded="false" aria-controls="info-panel"><svg class="icon"><use href="#ic-menu"/></svg></button>
+        <label class="map-search" for="map-search"><svg class="icon"><use href="#ic-search"/></svg><input id="map-search" type="search" autocomplete="off" placeholder="Search locations, districts, MOH areas…" aria-label="Search risk locations and districts"/><span class="search-shortcut" aria-hidden="true">⌘ K</span></label>
+        <button type="button" id="clear-search" class="map-tool clear-search" aria-label="Clear search" hidden><svg class="icon"><use href="#ic-close"/></svg></button>
+      </div>
+
+      <div class="map-quicktools" aria-label="Map tools">
+        <button class="map-tool labelled-tool" type="button" id="layers-toggle" aria-expanded="false" aria-controls="layer-popover"><svg class="icon"><use href="#ic-layers"/></svg><span>Layers</span></button>
+        <button class="map-tool labelled-tool" type="button" id="stats-toggle" aria-expanded="false" aria-controls="stats-popover"><svg class="icon"><use href="#ic-chart"/></svg><span>Overview</span></button>
+      </div>
+
+      <section class="floating-popover" id="layer-popover" aria-label="Map layers" hidden>
+        <div class="popover-heading"><strong>Map layers</strong><button class="quiet-icon" type="button" data-hide-popover aria-label="Close layers"><svg class="icon"><use href="#ic-close"/></svg></button></div>
+        <label class="switch-row"><span><i class="swatch high"></i> Reported high-risk</span><input type="checkbox" id="filter-high" checked/></label>
+        <label class="switch-row"><span><i class="swatch low"></i> Reported lower-risk</span><input type="checkbox" id="filter-low"/></label>
+        <label class="switch-row"><span><i class="swatch unknown"></i> Unclassified</span><input type="checkbox" id="filter-unknown"/></label>
+        <label class="switch-row"><span><span aria-hidden="true">🐊</span> Crocodile warnings</span><input type="checkbox" id="filter-croc" checked/></label>
+        <p class="popover-foot">Lower-risk does not mean safe for swimming. Risk categories reflect district reports.</p>
+      </section>
+
+      <section class="floating-popover" id="stats-popover" aria-label="National map overview" hidden>
+        <div class="popover-heading"><strong>National overview</strong><button class="quiet-icon" type="button" data-hide-popover aria-label="Close overview"><svg class="icon"><use href="#ic-close"/></svg></button></div>
+        <div class="overview-metrics">
+          <div><strong id="kpi-high">—</strong><span>High-risk records</span></div>
+          <div><strong id="kpi-districts">—</strong><span>Districts reporting</span></div>
+          <div><strong id="kpi-mapped">—</strong><span>Locations mapped</span></div>
+          <div><strong id="kpi-hazards">—</strong><span>Crocodile warnings</span></div>
         </div>
-        <div class="topbar-right"><span class="topbar-status"><span class="status-dot"></span> Dataset not connected</span><span class="avatar">NCD</span></div>
-      </header>
-      <main id="main-content">
-        <section class="page view" id="view-overview" data-view-content="overview">
-          <div class="page-heading"><div><div class="eyebrow">MINISTRY OF HEALTH · SRI LANKA</div><h1>National Drowning Risk<br><span>Mapping Dashboard</span></h1><p>Discover reported drowning-prone areas, explore districts and support safer water environments across Sri Lanka.</p></div><div class="headline-art" aria-hidden="true"><div class="rings"><svg class="ico"><use href="#i-wave"/></svg></div></div></div>
-          <div class="notice-bar"><svg class="ico"><use href="#i-info"/></svg><span><strong>Prototype preview.</strong> The district map is available for navigation. Drowning-risk locations and statistics will appear once the confirmed dataset is connected.</span><span class="notice-status">DATA PENDING</span></div>
-          <div class="section-heading"><h2>National overview</h2><span>Risk-area registry</span></div>
-          <div class="kpi-grid">
-            <div class="kpi-card"><div class="kpi-icon high"><svg class="ico"><use href="#i-pin"/></svg></div><div class="kpi-value" id="kpi-high">—</div><div class="kpi-label">Reported high-risk locations</div><div class="kpi-foot">Primary monitoring indicator</div></div>
-            <div class="kpi-card"><div class="kpi-icon accent"><svg class="ico"><use href="#i-grid"/></svg></div><div class="kpi-value" id="kpi-districts">—</div><div class="kpi-label">Districts with submitted locations</div><div class="kpi-foot">Across Sri Lanka</div></div>
-            <div class="kpi-card"><div class="kpi-icon blue"><svg class="ico"><use href="#i-map"/></svg></div><div class="kpi-value" id="kpi-mapped">—</div><div class="kpi-label">Locations successfully mapped</div><div class="kpi-foot">Confirmed coordinates</div></div>
-            <div class="kpi-card"><div class="kpi-icon gold"><svg class="ico"><use href="#i-alert"/></svg></div><div class="kpi-value" id="kpi-hazards">—</div><div class="kpi-label">Other water hazards reported</div><div class="kpi-foot">Including crocodile hazards</div></div>
-          </div>
-          <div class="dashboard-grid" id="map-section">
-            <div class="panel map-panel">
-              <div class="panel-top"><div><div class="panel-overline">GEOGRAPHICAL OVERVIEW</div><h2>Drowning risk area map</h2><p>Explore locations and geographical coverage by district.</p></div><button type="button" class="ghost-btn" id="expand-map"><svg class="ico"><use href="#i-expand"/></svg><span>Expand</span></button></div>
-              <div class="map-filters"><label class="select-wrap"><span>District</span><select id="district-select" aria-label="Select district"><option value="">All districts · Sri Lanka</option></select></label><button type="button" class="reset-btn" id="reset-map"><svg class="ico"><use href="#i-reset"/></svg>Reset view</button></div>
-              <div class="map-stage">
-                <div id="risk-map" aria-label="Interactive map of Sri Lanka and districts"></div>
-                <div class="map-maploading" id="map-loading"><svg class="ico"><use href="#i-map"/></svg><strong>Preparing interactive map</strong><span>Connecting to mapping layers…</span></div>
-                <div class="map-chip" id="map-chip">SRI LANKA · NATIONAL VIEW</div>
-              </div>
-              <div class="map-legend"><span class="legend-title">MAP LAYERS</span><label><input id="filter-high" type="checkbox" checked><i class="legend-dot high"></i> High-risk</label><label><input id="filter-low" type="checkbox"><i class="legend-dot low"></i> Lower-risk</label><label><input id="filter-unknown" type="checkbox"><i class="legend-dot unknown"></i> Unclassified</label><label><input id="filter-croc" type="checkbox" checked> 🐊 Other hazards</label></div>
-              <div class="map-footnote"><svg class="ico"><use href="#i-info"/></svg>Lower-risk locations are not necessarily safe for swimming. Map points will appear only after coordinates are provided.</div>
+        <p class="popover-foot">Counts reflect reported entries in the published dataset, not drowning mortality rates.</p>
+      </section>
+
+      <div class="map-side-actions">
+        <button class="map-round-action" type="button" id="reset-view" aria-label="Show all of Sri Lanka" title="Reset national view"><svg class="icon"><use href="#ic-reset"/></svg></button>
+        <button class="map-round-action" type="button" id="locate-me" aria-label="Find my location" title="Find my location"><svg class="icon"><use href="#ic-target"/></svg></button>
+      </div>
+
+      <div class="map-location-label"><span class="location-label-dot"></span><span id="view-label">SRI LANKA · NATIONAL MAP</span></div>
+
+      <div class="map-bottom-tools">
+        <div class="map-legend"><span class="legend-item"><i class="swatch high"></i> High-risk</span><span class="legend-item"><i class="swatch low"></i> Lower-risk (optional)</span></div>
+        <button class="report-fab" type="button" data-start-report><svg class="icon"><use href="#ic-plus"/></svg><span>Report a risk location</span></button>
+      </div>
+
+      <div class="data-footnote"><span id="data-refreshed">Loading data…</span><span class="dot-separator">·</span><span>Risk locations are reported, not independently safety-certified</span></div>
+
+      <div class="drawer-scrim" id="drawer-scrim" hidden></div>
+      <aside class="info-panel" id="info-panel" aria-label="Location explorer" aria-hidden="true">
+        <div class="drawer-handle" aria-hidden="true"></div>
+        <div class="panel-head">
+          <div><span class="panel-eyebrow">NATIONAL WATER SAFETY</span><h2 id="panel-title">Explore risk areas</h2></div>
+          <button class="quiet-icon" type="button" id="close-panel" aria-label="Close panel"><svg class="icon"><use href="#ic-close"/></svg></button>
+        </div>
+        <div class="panel-scroll">
+          <section id="pane-browse">
+            <div class="selected-district-note" id="district-summary-note">Explore reported locations across Sri Lanka.</div>
+            <div class="mini-stats"><div><strong id="district-high">—</strong><small>High-risk</small></div><div><strong id="district-low">—</strong><small>Lower-risk</small></div><div><strong id="district-mapped">—</strong><small>Mapped</small></div></div>
+            <label class="field-label" for="district-select">Select a district</label>
+            <select id="district-select" class="select-control" aria-label="Select district"><option value="">All districts · Sri Lanka</option></select>
+            <div class="list-title"><strong>Locations</strong><span id="search-count">—</span></div>
+            <div id="location-results" class="location-results"></div>
+            <button type="button" id="show-more" class="show-more" hidden>Show more locations <svg class="icon"><use href="#ic-chevron"/></svg></button>
+            <p class="small-note">Only locations with coordinates appear as map markers. The list includes submitted entries without coordinates.</p>
+          </section>
+          <section id="pane-detail" hidden>
+            <button type="button" class="text-back" id="back-to-browse"><svg class="icon"><use href="#ic-back"/></svg> Back to locations</button>
+            <div id="location-detail"></div>
+          </section>
+          <section id="pane-about" hidden>
+            <button type="button" class="text-back" id="back-from-about"><svg class="icon"><use href="#ic-back"/></svg> Back to map explorer</button>
+            <div class="about-banner"><img src="./logo.png" alt="Directorate of Non-Communicable Diseases, Ministry of Health banner" loading="lazy"/></div>
+            <h3>About this map</h3>
+            <p>The National Drowning Risk Mapping Dashboard is an initiative of the Injury Prevention &amp; Control Unit, Directorate of Non-Communicable Diseases, Ministry of Health, Sri Lanka.</p>
+            <p>It brings together drowning-risk locations identified in district health submissions to support geographical exploration, water safety awareness, and prevention planning.</p>
+            <h3>Interpreting the map</h3>
+            <p>High- and lower-risk classifications are those reported by the respective districts. A lower-risk designation is <strong>not</strong> a guarantee that swimming is safe. Some map coordinates may represent approximate locations.</p>
+            <p>Some records originate from 2024 or earlier reporting periods. The dashboard reflects available reports and is not a real-time safety alert system.</p>
+            <h3>About public reports</h3>
+            <p>New location suggestions and correction requests should be reviewed by the responsible team before publication. Public submissions do not directly edit the official risk map.</p>
+            <div class="about-meta" id="about-data-meta"></div>
+            <a href="https://ncd.health.gov.lk/" target="_blank" rel="noopener noreferrer" class="external-link">Directorate of NCDs website <svg class="icon"><use href="#ic-arrow"/></svg></a>
+          </section>
+        </div>
+      </aside>
+
+      <div class="report-overlay" id="report-overlay" hidden>
+        <div class="report-window" role="dialog" aria-modal="true" aria-labelledby="report-title">
+          <div class="report-head"><div><span class="panel-eyebrow">COMMUNITY CONTRIBUTION</span><h2 id="report-title">Report a risk location</h2></div><button class="quiet-icon" type="button" id="close-report" aria-label="Close report form"><svg class="icon"><use href="#ic-close"/></svg></button></div>
+          <div class="report-body">
+            <p class="report-intro" id="report-intro">Suggest a location that needs review. It won't appear on the official map automatically.</p>
+            <div class="report-grid">
+              <label>Location name <span class="required">*</span><input type="text" id="report-name" maxlength="180" placeholder="River, beach, tank or bathing location"/></label>
+              <label>District <span class="required">*</span><select id="report-district"><option value="">Choose district</option></select></label>
             </div>
-            <div class="right-stack">
-              <div class="panel district-panel"><div class="panel-overline">DISTRICT SPOTLIGHT</div><div class="spotlight-heading"><h2 id="spotlight-name">All districts</h2><span class="spotlight-icon"><svg class="ico"><use href="#i-pin"/></svg></span></div><p id="spotlight-description">Select one of Sri Lanka’s 25 districts to explore reported drowning-risk locations.</p><div class="spotlight-stats"><div><strong id="district-high">—</strong><span>High-risk locations</span></div><div><strong id="district-low">—</strong><span>Lower-risk locations</span></div></div><div id="spotlight-empty" class="small-empty">Risk locations will be added here when verified.</div><button type="button" class="link-btn" id="open-districts">Browse all 25 districts <svg class="ico"><use href="#i-arrow"/></svg></button></div>
-              <div class="panel chart-panel"><div class="panel-overline">DISTRIBUTION</div><h2>District-wise risk areas</h2><p>Reported high-risk locations by district</p><div id="district-bars"><div class="chart-empty"><svg class="ico"><use href="#i-chart"/></svg><span>District comparisons will appear when data are added.</span></div></div></div>
+            <div class="report-grid">
+              <label>Water body type<select id="report-waterbody"><option value="">Not specified</option><option>River</option><option>Reservoir / Tank</option><option>Beach / Sea</option><option>Canal</option><option>Lake</option><option>Well</option><option>Other</option></select></label>
+              <label>Report type<select id="report-type"><option value="New location">New risk location</option><option value="Correction">Correction to an existing location</option></select></label>
             </div>
+            <label class="report-full">Why should this place be reviewed? <span class="required">*</span><textarea id="report-description" maxlength="1200" rows="3" placeholder="Describe the hazard, known incidents, or the correction needed…"></textarea></label>
+            <div class="pin-capture-box">
+              <div><strong>Map coordinates</strong><p id="report-coordinates">No pin selected. Use the map to choose the location.</p></div>
+              <div class="pin-buttons"><button type="button" class="outline-btn" id="choose-map-point"><svg class="icon"><use href="#ic-pin"/></svg> Place pin</button><button type="button" class="outline-btn" id="report-use-location"><svg class="icon"><use href="#ic-target"/></svg> Use GPS</button></div>
+            </div>
+            <div class="report-note" id="report-form-note">The reporting form will be connected after its review destination is configured. For now, you can copy a report draft.</div>
           </div>
-          <div class="bottom-grid"><div class="info-panel"><span class="tiny-caps">OUR FOCUS</span><div class="info-panel-content"><div class="info-graphic"><svg class="ico"><use href="#i-shield"/></svg></div><div><h3>Making water environments safer</h3><p>Connecting district-level risk identification with informed prevention, local action and water-safety awareness.</p><button type="button" class="text-link" data-go="safety">Explore water safety <svg class="ico"><use href="#i-arrow"/></svg></button></div></div></div><div class="info-panel light"><span class="tiny-caps">ABOUT THIS INITIATIVE</span><h3>Supporting evidence-informed prevention</h3><p>Developed for the Injury Prevention & Control Unit, Directorate of Non-Communicable Diseases, Ministry of Health, Sri Lanka.</p><button type="button" class="text-link" data-go="about">About the dashboard <svg class="ico"><use href="#i-arrow"/></svg></button></div></div>
-        </section>
-        <section class="page view" id="view-districts" data-view-content="districts" hidden><div class="subpage-heading"><div class="eyebrow">EXPLORE THE ISLAND</div><h1>District explorer</h1><p>Select a district to zoom the map and view its reported risk-area summary.</p></div><div class="panel district-list-panel"><div class="panel-top"><div><h2>All 25 administrative districts</h2><p>District navigation remains available before location data are uploaded.</p></div><span class="count-pill">25 districts</span></div><div class="district-grid" id="district-grid"></div></div></section>
-        <section class="page view" id="view-locations" data-view-content="locations" hidden><div class="subpage-heading"><div class="eyebrow">RISK AREA REGISTRY</div><h1>Location directory</h1><p>Search reported drowning-prone locations by name, district or MOH area.</p></div><div class="panel directory-panel"><div class="directory-tools"><label class="search-wrap"><svg class="ico"><use href="#i-search"/></svg><input type="search" id="directory-search" placeholder="Search location, district or MOH area…" aria-label="Search locations"></label><select id="directory-district" aria-label="Filter directory by district"><option value="">All districts</option></select></div><div class="mobile-table-hint">Swipe sideways to view all columns <svg class="ico" aria-hidden="true"><use href="#i-arrow"/></svg></div><div class="table-scroller" tabindex="0" role="region" aria-label="Drowning location records table; scroll horizontally to view all columns"><table><thead><tr><th>Location</th><th>District / MOH area</th><th>Reported category</th><th>Mapping</th></tr></thead><tbody id="directory-rows"></tbody></table></div><div class="directory-empty" id="directory-empty"><div class="empty-round"><svg class="ico"><use href="#i-pin"/></svg></div><h3>No risk locations loaded yet</h3><p>Once a confirmed location list is connected, records will appear here automatically.</p></div></div></section>
-        <section class="page view" id="view-safety" data-view-content="safety" hidden><div class="subpage-heading"><div class="eyebrow">PREVENTION & RESPONSE</div><h1>Water safety and drowning prevention</h1><p>Key prevention themes for community awareness and district-level planning.</p></div><div class="safety-grid"><article class="panel safety-card"><div class="card-symbol red"><svg class="ico"><use href="#i-alert"/></svg></div><h2>Recognise hazardous locations</h2><p>Identify deep or fast-moving water, unsafe bathing points, strong coastal currents, unprotected wells and other local hazards.</p></article><article class="panel safety-card"><div class="card-symbol royal"><svg class="ico"><use href="#i-shield"/></svg></div><h2>Prevent exposure</h2><p>Prioritise child supervision, water barriers, appropriate warning signs and community-level safety education.</p></article><article class="panel safety-card"><div class="card-symbol gold"><svg class="ico"><use href="#i-wave"/></svg></div><h2>Respond safely</h2><p>Avoid unsafe rescues. Alert emergency services and use available reach or throw rescue techniques without entering hazardous water.</p></article></div><div class="notice-bar neutral"><svg class="ico"><use href="#i-info"/></svg><span>This page provides general water-safety themes, not site-specific clearance or a substitute for official emergency guidance.</span></div></section>
-        <section class="page view" id="view-about" data-view-content="about" hidden><div class="subpage-heading"><div class="eyebrow">PROGRAMME INFORMATION</div><h1>About the dashboard</h1><p>Purpose, institution and data interpretation.</p></div><div class="about-layout"><article class="panel about-main"><div class="panel-overline">NATIONAL WATER SAFETY INITIATIVE</div><h2>Supporting geographical risk identification across Sri Lanka</h2><p>The <strong>National Drowning Risk Mapping Dashboard</strong> is being developed for the Injury Prevention & Control Unit, Directorate of Non-Communicable Diseases, Ministry of Health, Sri Lanka.</p><p>It aims to bring district-reported drowning-prone locations into one searchable and interactive geographical view, supporting prevention planning, local coordination and water safety awareness.</p><h3>About the Injury Prevention & Control Unit</h3><p>The Directorate of Non-Communicable Diseases serves as the Ministry of Health’s national focal point for injury prevention. Its programmes emphasise surveillance, risk reduction, evidence-informed interventions and multisectoral collaboration.</p></article><aside class="panel about-side"><div class="panel-overline">DATA NOTES</div><h2>Sources and interpretation</h2><p>Planned source: district-level drowning risk-area submissions to the Injury Prevention & Control Unit, including reports prepared in 2024 and earlier periods.</p><p>“High-risk” and “lower-risk” reflect the submitted district descriptions; they are not calculated mortality rates. Lower-risk does not mean safe.</p><p>All 25 districts are navigable, but an absence of displayed markers does not mean absence of drowning risk.</p><div class="source-divider"></div><span class="tiny-caps">SOURCE DOCUMENT</span><p><em>All District – Drowning risk area</em> (district submissions; review copy).</p><span class="tiny-caps">VERSION</span><p>Development prototype · Location data pending</p></aside></div></section>
-      </main>
-      <footer class="footer"><span>© National Drowning Risk Mapping Dashboard · Development prototype</span><span id="data-refresh-label">Location dataset pending · Map tiles © OpenStreetMap contributors</span></footer>
-    </div>
+          <div class="report-footer"><button type="button" class="outline-btn" id="copy-report"><svg class="icon"><use href="#ic-copy"/></svg> Copy details</button><button type="button" class="primary-btn" id="submit-report">Continue to reporting form <svg class="icon"><use href="#ic-arrow"/></svg></button></div>
+        </div>
+      </div>
+      <div class="map-pick-notice" id="map-pick-notice" hidden><span>Tap anywhere on the map to place the reported location pin.</span><button type="button" id="cancel-picking">Cancel</button></div>
+      <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+    </main>
   </div>
 </body>
 </html>
