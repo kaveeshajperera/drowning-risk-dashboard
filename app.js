@@ -13,7 +13,8 @@
     map: null, mapReady: false, basemapLayer: null, placeLabelLayer: null, placeNames: [], activeBasemap: 'satellite', boundaryLayer: null, markerLayer: null, selected: null,
     high: true, low: false, unknown: false, crocodile: true, shown: 50,
     pane: 'browse', panelOpen: false, picking: false, reportLocationId: '', reportPoint: null,
-    reportPin: null, userPin: null, toastTimer: null
+    reportPin: null, userPin: null, toastTimer: null,
+    nearbyLayer: null, nearbyCache: new Map(), nearbyPending: false, nearbyLastQuery: 0
   };
   const $ = selector => document.querySelector(selector);
   const $$ = selector => [...document.querySelectorAll(selector)];
@@ -205,6 +206,7 @@
       state.placeNames = rows.filter(r => Array.isArray(r) && typeof r[0] === 'string'
         && Number.isFinite(r[1]) && Number.isFinite(r[2]));
       renderModernLabels();
+      if (state.search) { renderLocations(); showDistrictSearch(state.search); showTownSearch(state.search); }
     } catch (error) {
       console.warn('Local place labels unavailable; satellite imagery remains available.', error);
     }
@@ -453,6 +455,39 @@
       chooseDistrict(btn.dataset.district);resetSearch();setPanel(true,'browse');
     }));
   }
+
+  function showTownSearch(term) {
+    if (!term || term.length < 2 || !state.placeNames.length) return;
+    const matches = state.placeNames
+      .map((place,index) => ({place,index}))
+      .filter(({place}) => place[0].toLowerCase().includes(term))
+      .sort((a,b) => a.place[0].length-b.place[0].length)
+      .slice(0,8);
+    if (!matches.length) return;
+    const section=document.createElement('div');
+    section.innerHTML='<div class="list-title"><strong>Matching towns &amp; villages</strong></div>'+
+      matches.map(({place,index}) => '<button type="button" class="location-item" data-place-index="'+index+'">' +
+      '<span class="pin-bubble unknown">'+iconSymbol('pin')+'</span><span class="location-item-body">' +
+      '<span class="location-item-name">'+esc(place[0])+'</span>' +
+      '<span class="location-item-meta">Zoom to this locality · reference place</span></span>' +iconSymbol('chevron')+'</button>').join('');
+    $('#location-results').prepend(section);
+    section.querySelectorAll('[data-place-index]').forEach(btn=>btn.addEventListener('click',()=>{
+      const place=state.placeNames[Number(btn.dataset.placeIndex)];
+      if (!place || !state.mapReady) return;
+      resetSearch();
+      if (state.district) {
+        state.district='';
+        $('#district-select').value='';
+        $('#view-label').textContent='SRI LANKA · NATIONAL MAP';
+        updateBoundaryStyle();
+        updateDistrictSummary();renderLocations();renderMarkers();
+      }
+      state.map.flyTo([place[1],place[2]],14,{duration:.7});
+      setPanel(false);
+      showToast('Zoom in and choose the exact water-body location, not just the town centre.');
+    }));
+  }
+
   function toggleRisk(name,checked) {
     state[name] = checked; state.shown = 50;
     renderLocations();renderMarkers();
@@ -470,6 +505,135 @@
       }
     },err => showToast(err.code === 1 ? 'Location permission was denied.' : 'Could not determine your location.'),
     {enableHighAccuracy:false,timeout:12000,maximumAge:60000});
+  }
+
+
+  // Optional, user-triggered small-area POI lookup.
+  // The public Overpass API is NOT a guaranteed production service.
+  // Do not query on map movement: that would overload a shared service.
+  function openGoogleMapsAtCenter() {
+    if (!state.mapReady) return;
+    const p=state.map.getCenter();
+    const url='https://www.google.com/maps/@?api=1&map_action=map&center='+
+      p.lat.toFixed(6)+','+p.lng.toFixed(6)+'&zoom='+Math.min(18,Math.max(12,state.map.getZoom()));
+    window.open(url,'_blank','noopener,noreferrer');
+  }
+
+  function nearbyKind(tags) {
+    const amenity=tags.amenity || '';
+    const tourist=tags.tourism || '';
+    if (['restaurant','cafe','fast_food'].includes(amenity)) return ['Food & drink','🍴'];
+    if (['attraction','viewpoint','museum'].includes(tourist) || tags.historic) return ['Attraction / landmark','🏛️'];
+    if (['hotel','guest_house'].includes(tourist)) return ['Accommodation','🏨'];
+    if (['hospital','pharmacy'].includes(amenity)) return ['Health facility','✚'];
+    if (tags.shop) return ['Shop','🛍️'];
+    if (amenity === 'school') return ['School','🏫'];
+    if (amenity === 'place_of_worship') return ['Place of worship','⛪'];
+    if (amenity === 'fuel') return ['Fuel station','⛽'];
+    if (amenity === 'police') return ['Police station','👮'];
+    return ['Local landmark','📍'];
+  }
+
+  function displayNearbyPlaces(elements) {
+    if (!state.mapReady) return;
+    if (state.nearbyLayer) state.map.removeLayer(state.nearbyLayer);
+    if (!state.map.getPane('nearbyReference')) {
+      const pane=state.map.createPane('nearbyReference');
+      pane.style.zIndex='590';
+    }
+    state.nearbyLayer=window.L.layerGroup().addTo(state.map);
+    const seen=new Set();
+    let rendered=0;
+    for(const place of elements) {
+      if(rendered>=100) break;
+      const tags=place.tags || {};
+      const name=str(tags.name || tags['name:en'] || '');
+      const lat=Number(place.lat ?? place.center?.lat);
+      const lng=Number(place.lon ?? place.center?.lon);
+      if(!name || !Number.isFinite(lat) || !Number.isFinite(lng)) continue;
+      const key=name.toLowerCase()+'|'+lat.toFixed(4)+'|'+lng.toFixed(4);
+      if(seen.has(key))continue;
+      seen.add(key);
+      const [kind,emoji]=nearbyKind(tags);
+      const icon=window.L.divIcon({
+        className:'nearby-reference-icon',
+        html:'<span class="nearby-symbol" title="'+esc(kind)+'">'+emoji+'</span>',
+        iconSize:[28,28],iconAnchor:[14,14]
+      });
+      const gm='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(lat.toFixed(6)+','+lng.toFixed(6));
+      const marker=window.L.marker([lat,lng],{icon,pane:'nearbyReference',title:name});
+      marker.bindTooltip(esc(name),{direction:'top'});
+      marker.bindPopup('<div class="poi-popup"><strong>'+esc(name)+'</strong><small>'+esc(kind)+
+        ' · OpenStreetMap reference place, not a drowning-risk location</small>' +
+        '<a href="'+gm+'" target="_blank" rel="noopener noreferrer">View in Google Maps ↗</a></div>');
+      marker.on('click',()=>{ if(state.picking) showToast('Choose the water body itself, not the nearby landmark marker.'); });
+      marker.addTo(state.nearbyLayer);
+      rendered++;
+    }
+    $('#nearby-places-status').textContent=rendered
+      ? rendered+' reference places shown around the area you searched. Move the map and select the button again to refresh.'
+      : 'No named reference places were returned for this area. Try Road view or Google Maps.';
+    showToast(rendered ? 'Showing '+rendered+' nearby reference places. These are not risk sites.' : 'No named places found here.');
+    state.map.attributionControl.addAttribution('Reference places © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>');
+  }
+
+  async function loadNearbyPlaces() {
+    if(!state.mapReady || state.nearbyPending)return;
+    const bounds=state.map.getBounds();
+    if(state.map.getZoom()<15 || bounds.getEast()-bounds.getWest()>.10 || bounds.getNorth()-bounds.getSouth()>.10) {
+      showToast('Zoom in closer (at least level 15) before loading nearby places.');
+      return;
+    }
+    const now=Date.now();
+    if(now-state.nearbyLastQuery<8000){
+      showToast('Please allow a few seconds before requesting places again.');
+      return;
+    }
+    state.nearbyLastQuery=now;
+    const b=[bounds.getSouth(),bounds.getWest(),bounds.getNorth(),bounds.getEast()];
+    const bbox=b.map(v=>v.toFixed(5)).join(',');
+    const key=b.map(v=>v.toFixed(3)).join(',');
+    const cached=state.nearbyCache.get(key);
+    if(cached && now-cached.at<30*60*1000) {
+      displayNearbyPlaces(cached.elements);
+      return;
+    }
+    const btn=$('#load-nearby-places');
+    state.nearbyPending=true;
+    btn.disabled=true;
+    btn.textContent='Loading reference places…';
+    $('#nearby-places-status').textContent='Checking OpenStreetMap reference places in the current small area…';
+    // Only submit a small local bounding box. No continuous query polling.
+    const query='[out:json][timeout:18];('+
+      'nwr["name"]["amenity"~"^(restaurant|cafe|fast_food|hospital|pharmacy|school|place_of_worship|fuel|police)$"]('+bbox+');'+
+      'nwr["name"]["tourism"~"^(attraction|viewpoint|museum|hotel|guest_house)$"]('+bbox+');'+
+      'nwr["name"]["shop"~"^(supermarket|convenience|mall)$"]('+bbox+');'+
+      'nwr["name"]["historic"]('+bbox+');'+
+      ');out center 170;';
+    const controller=new AbortController();
+    const abortTimer=setTimeout(()=>controller.abort(),22000);
+    try{
+      const res=await fetch('https://overpass-api.de/api/interpreter',{
+        method:'POST',
+        headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},
+        body:new URLSearchParams({data:query}),
+        signal:controller.signal
+      });
+      if(!res.ok)throw Error('OpenStreetMap place service HTTP '+res.status);
+      const data=await res.json();
+      if(!Array.isArray(data.elements))throw Error('Unexpected response');
+      state.nearbyCache.set(key,{at:now,elements:data.elements});
+      displayNearbyPlaces(data.elements);
+    }catch(error){
+      console.warn('Nearby reference places are unavailable:',error);
+      $('#nearby-places-status').textContent='Nearby places could not be loaded. Road view and Google Maps remain available.';
+      showToast('Place lookup unavailable. Try Road view or the Google Maps reference.');
+    }finally{
+      clearTimeout(abortTimer);
+      state.nearbyPending=false;
+      btn.disabled=false;
+      btn.textContent='Load nearby restaurants & landmarks';
+    }
   }
 
   function reportingConfig() { return config.publicReporting || {}; }
@@ -574,6 +738,9 @@
       if (input.checked) setMapBackground(input.value);
     }));
     $('#stats-toggle').addEventListener('click',()=>togglePopover('#stats-popover','#stats-toggle'));
+    $('#load-nearby-places').addEventListener('click',loadNearbyPlaces);
+    $('#pick-nearby-places').addEventListener('click',loadNearbyPlaces);
+    $('#pick-open-google-maps').addEventListener('click',openGoogleMapsAtCenter);
     $$('[data-hide-popover]').forEach(el=>el.addEventListener('click',closePopovers));
     $('#reset-view').addEventListener('click',()=>{chooseDistrict('');resetSearch();setPanel(false);});
     $('#locate-me').addEventListener('click',()=>locateUser(false));
@@ -587,11 +754,12 @@
       $('#clear-search').hidden = !state.search;
       renderLocations();renderMarkers();
       showDistrictSearch(state.search);
+      showTownSearch(state.search);
       if (state.search) setPanel(true,'browse');
     });
     $('#map-search').addEventListener('keydown',ev=>{if(ev.key==='Enter' && state.search){setPanel(true,'browse');ev.preventDefault();}});
     $('#clear-search').addEventListener('click',()=>{resetSearch();$('#map-search').focus();});
-    $('#show-more').addEventListener('click',()=>{state.shown+=50;renderLocations();showDistrictSearch(state.search);});
+    $('#show-more').addEventListener('click',()=>{state.shown+=50;renderLocations();showDistrictSearch(state.search);showTownSearch(state.search);});
     $$('[data-start-report]').forEach(btn=>btn.addEventListener('click',()=>startReport()));
     $('#close-report').addEventListener('click',closeReport);
     $('#report-overlay').addEventListener('click',ev=>{if(ev.target.id==='report-overlay')closeReport();});
