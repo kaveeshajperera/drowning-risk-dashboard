@@ -97,6 +97,13 @@
 
       <section class="floating-popover" id="layer-popover" aria-label="Map layers" hidden>
         <div class="popover-heading"><strong>Map layers</strong><button class="quiet-icon" type="button" data-hide-popover aria-label="Close layers"><svg class="icon"><use href="#ic-close"/></svg></button></div>
+        <div class="basemap-heading">Map background</div>
+        <div class="basemap-options" role="group" aria-label="Choose map background">
+          <label class="basemap-option"><input type="radio" name="basemap" value="satellite" checked/><span>Satellite</span></label>
+          <label class="basemap-option"><input type="radio" name="basemap" value="terrain"/><span>Terrain</span></label>
+          <label class="basemap-option"><input type="radio" name="basemap" value="road"/><span>Road</span></label>
+        </div>
+        <div class="basemap-divider"></div>
         <label class="switch-row"><span><i class="swatch high"></i> Reported high-risk</span><input type="checkbox" id="filter-high" checked/></label>
         <label class="switch-row"><span><i class="swatch low"></i> Reported lower-risk</span><input type="checkbox" id="filter-low"/></label>
         <label class="switch-row"><span><i class="swatch unknown"></i> Unclassified</span><input type="checkbox" id="filter-unknown"/></label>
