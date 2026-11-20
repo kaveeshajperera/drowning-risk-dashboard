@@ -10,7 +10,7 @@
   const districtNames = districts.map(d => d.name);
   const state = {
     district: '', search: '', rows: [], dataLoaded: false, error: false, lastSuccess: null,
-    map: null, mapReady: false, basemapLayer: null, activeBasemap: 'satellite', boundaryLayer: null, markerLayer: null, selected: null,
+    map: null, mapReady: false, basemapLayer: null, placeLabelLayer: null, activeBasemap: 'satellite', boundaryLayer: null, markerLayer: null, selected: null,
     high: true, low: false, unknown: false, crocodile: true, shown: 50,
     pane: 'browse', panelOpen: false, picking: false, reportLocationId: '', reportPoint: null,
     reportPin: null, userPin: null, toastTimer: null
@@ -192,9 +192,32 @@
     state.activeBasemap = mode;
     layer.addTo(state.map);
     layer.bringToBack();
+    // Place labels are a separate transparent reference layer over satellite imagery.
+    // This keeps towns and city names visible without hiding river or reservoir imagery.
+    if (state.placeLabelLayer) {
+      state.map.removeLayer(state.placeLabelLayer);
+      state.placeLabelLayer = null;
+    }
+    if (mode === 'satellite') {
+      if (!state.map.getPane('placeLabels')) {
+        const labelsPane = state.map.createPane('placeLabels');
+        labelsPane.style.zIndex = '350'; // Above imagery, below risk markers and boundaries.
+        labelsPane.style.pointerEvents = 'none';
+      }
+      state.placeLabelLayer = window.L.tileLayer(
+        'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
+        {
+          pane: 'placeLabels',
+          maxZoom: 19,
+          attribution: 'Place names &copy; Esri and contributors'
+        }
+      ).addTo(state.map);
+    }
     document.querySelectorAll('input[name="basemap"]').forEach(input => {
       input.checked = input.value === mode;
     });
+    const pickStyleButton = $('#pick-map-style');
+    if (pickStyleButton) pickStyleButton.textContent = mode === 'road' ? 'Satellite view' : 'Road view';
   }
 
   function initMap() {
@@ -516,6 +539,9 @@
     $('#report-overlay').addEventListener('click',ev=>{if(ev.target.id==='report-overlay')closeReport();});
     $('#choose-map-point').addEventListener('click',chooseMapPoint);
     $('#cancel-picking').addEventListener('click',cancelPicking);
+    $('#pick-map-style').addEventListener('click',() => {
+      setMapBackground(state.activeBasemap === 'road' ? 'satellite' : 'road');
+    });
     $('#report-use-location').addEventListener('click',()=>locateUser(true));
     $('#copy-report').addEventListener('click',copyReport);
     $('#submit-report').addEventListener('click',sendToForm);
