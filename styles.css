@@ -26,3 +26,10 @@
   .map-pick-notice{top:160px;left:11px;transform:none;width:calc(100vw - 22px);max-width:calc(100vw - 22px);padding:10px;gap:10px;flex-wrap:wrap}
   .pick-actions{width:100%;justify-content:flex-start}
 }
+
+/* Crisp modern labels, placed independently of satellite imagery */
+.place-label-anchor{background:transparent;border:0;pointer-events:none!important}
+.modern-place-label{display:inline-block;position:absolute;left:0;top:0;transform:translate(-50%,-50%);white-space:nowrap;pointer-events:none!important;font-family:'DM Sans',system-ui,-apple-system,'Segoe UI',sans-serif;font-weight:700;font-size:12px;line-height:1.2;letter-spacing:-.015em;color:#fff;text-shadow:0 1px 3px #101a2e,0 0 7px #101a2e,0 0 12px #101a2e}
+.modern-place-label.major{font-weight:800;font-size:14px;letter-spacing:-.02em}
+.modern-place-label.minor{font-size:11px;font-weight:650}
+@media(max-width:720px){.modern-place-label.major{font-size:12px}.modern-place-label.minor{font-size:10px}}
