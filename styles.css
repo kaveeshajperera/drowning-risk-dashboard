@@ -16,3 +16,13 @@
 .basemap-option input:checked+span{background:var(--royal);border-color:var(--royal);color:#fff}
 .basemap-option input:focus-visible+span{outline:3px solid rgba(82,125,211,.4);outline-offset:2px}
 .basemap-divider{height:1px;background:#e7ecf5;margin:14px 0 3px}
+
+/* City-name support when reporting a waterbody location. */
+.map-pick-notice{width:min(670px,calc(100vw - 32px));justify-content:space-between;line-height:1.45}
+.pick-actions{display:flex;gap:8px;align-items:center;flex-shrink:0}
+#pick-map-style{background:#eef3fb;color:var(--royal);border:1px solid #b6c7e6}
+#pick-map-style:hover{background:#e1eaf9}
+@media(max-width:720px){
+  .map-pick-notice{top:160px;left:11px;transform:none;width:calc(100vw - 22px);max-width:calc(100vw - 22px);padding:10px;gap:10px;flex-wrap:wrap}
+  .pick-actions{width:100%;justify-content:flex-start}
+}
