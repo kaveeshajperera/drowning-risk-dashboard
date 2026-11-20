@@ -33,3 +33,19 @@
 .modern-place-label.major{font-weight:800;font-size:14px;letter-spacing:-.02em}
 .modern-place-label.minor{font-size:11px;font-weight:650}
 @media(max-width:720px){.modern-place-label.major{font-size:12px}.modern-place-label.minor{font-size:10px}}
+
+/* Optional reference places: visually distinct from drowning-risk pins. */
+.nearby-load-btn{display:block;width:100%;background:#ecf2fe;border:1px solid #b9caeb;border-radius:10px;color:#243b83;padding:12px 11px;font-weight:800;font-size:12px;line-height:1.3;text-align:center}
+.nearby-load-btn:disabled{opacity:.58;cursor:wait}
+.nearby-load-btn:hover:not(:disabled){background:#dce8fe}
+.poi-help{font-size:11px;line-height:1.5;color:#6b7890;margin:8px 0 2px}
+.nearby-reference-icon{background:transparent!important;border:0!important}
+.nearby-symbol{display:flex;justify-content:center;align-items:center;width:28px;height:28px;border-radius:9px;background:rgba(255,255,255,.97);border:1px solid #c3d2e6;box-shadow:0 2px 8px #1c355d70;font-size:16px}
+.poi-popup{font-family:'DM Sans',system-ui,sans-serif;max-width:240px;display:flex;flex-direction:column;gap:6px}
+.poi-popup strong{font-weight:800;font-size:13px}
+.poi-popup small{line-height:1.45;color:#61718c}
+.poi-popup a{color:#243b83;font-weight:700}
+.pick-actions{flex-wrap:wrap}
+#pick-nearby-places,#pick-open-google-maps{background:#eef3fb;color:var(--royal);border:1px solid #b6c7e6}
+#pick-nearby-places:hover,#pick-open-google-maps:hover{background:#e1eaf9}
+@media(max-width:720px){.map-pick-notice{top:158px;max-height:150px;overflow:auto}.pick-actions button{font-size:11px;padding:8px}}
