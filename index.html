@@ -99,7 +99,7 @@
         <div class="popover-heading"><strong>Map layers</strong><button class="quiet-icon" type="button" data-hide-popover aria-label="Close layers"><svg class="icon"><use href="#ic-close"/></svg></button></div>
         <div class="basemap-heading">Map background</div>
         <div class="basemap-options" role="group" aria-label="Choose map background">
-          <label class="basemap-option"><input type="radio" name="basemap" value="satellite" checked/><span>Satellite</span></label>
+          <label class="basemap-option"><input type="radio" name="basemap" value="satellite" checked/><span>Satellite + names</span></label>
           <label class="basemap-option"><input type="radio" name="basemap" value="terrain"/><span>Terrain</span></label>
           <label class="basemap-option"><input type="radio" name="basemap" value="road"/><span>Road</span></label>
         </div>
@@ -198,7 +198,7 @@
           <div class="report-footer"><button type="button" class="outline-btn" id="copy-report"><svg class="icon"><use href="#ic-copy"/></svg> Copy details</button><button type="button" class="primary-btn" id="submit-report">Continue to reporting form <svg class="icon"><use href="#ic-arrow"/></svg></button></div>
         </div>
       </div>
-      <div class="map-pick-notice" id="map-pick-notice" hidden><span>Tap anywhere on the map to place the reported location pin.</span><button type="button" id="cancel-picking">Cancel</button></div>
+      <div class="map-pick-notice" id="map-pick-notice" hidden><span>Zoom in to locate the water body, then tap to place your pin. Use Road view for more place and road names.</span><div class="pick-actions"><button type="button" id="pick-map-style">Road view</button><button type="button" id="cancel-picking">Cancel</button></div></div>
       <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
     </main>
   </div>
