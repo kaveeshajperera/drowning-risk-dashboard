@@ -1,15 +1,25 @@
 /**
  * National Drowning Risk Mapping Dashboard — PIN QUALITY AUDIT
  * Add as a NEW Apps Script file in the Google Sheet containing "Dashboard Data".
- * Run auditDrowningMapPins(). Never changes "Dashboard Data".
+ * Run auditDrowningMapPins() for the quick audit, or auditDrowningMapPinsWithDistricts() for external boundary checks. Never changes "Dashboard Data".
  * Creates/rebuilds "PIN QA" for human review.
  */
 function auditDrowningMapPins() {
+  return runDrowningPinAudit_(false);
+}
+
+function auditDrowningMapPinsWithDistricts() {
+  return runDrowningPinAudit_(true);
+}
+
+function runDrowningPinAudit_(withDistricts) {
+  console.log('Starting pin audit. External district lookup: '+withDistricts);
   const ss=SpreadsheetApp.getActiveSpreadsheet();
   if(!ss)throw new Error('Open your MASTER Google Sheet, then Extensions > Apps Script to run this.');
   const source=ss.getSheetByName('Dashboard Data');
   if(!source)throw new Error('Could not find the sheet named "Dashboard Data".');
   const grid=source.getDataRange().getDisplayValues();
+  console.log('Read '+(grid.length-1)+' source rows.');
   if(grid.length<2)throw new Error('Dashboard Data contains no records.');
   const normalize=s=>String(s||'').normalize('NFKC').toLowerCase().replace(/[^a-z0-9]/g,'');
   const headings=grid[0].map(normalize);
@@ -35,7 +45,8 @@ function auditDrowningMapPins() {
   const duplicates=new Map();
   for(const r of records){const k=positionKey(r);if(k){if(!duplicates.has(k))duplicates.set(k,[]);duplicates.get(k).push(r);}}
   // Attempt a district polygon check. An outage NEVER leads to a false "verified" status.
-  const boundary=loadDrowningDistrictBoundaries_();
+  const boundary=withDistricts ? loadDrowningDistrictBoundaries_() : {features:[],note:'Not run in quick audit mode — district mismatches not assessed'};
+  console.log('Boundary check: '+boundary.note);
   const districtNormalize=s=>String(s||'').toLowerCase().replace(/district|දිස්ත්‍රික්කය|மாவட்டம்/g,'')
     .replace(/moneragala/g,'monaragala').replace(/[^a-z]/g,'');
   const output=[];
@@ -89,6 +100,7 @@ function auditDrowningMapPins() {
   }
   const sortValue=x=>x[0]==='HIGH'?0:x[0]==='MEDIUM'?1:x[0]==='LOW'?2:3;
   output.sort((a,b)=>sortValue(a)-sortValue(b));
+  console.log('Prepared '+output.length+' audit records. Writing PIN QA.');
   let audit=ss.getSheetByName('PIN QA');
   if(!audit)audit=ss.insertSheet('PIN QA');
   // A previous failed run may have left merged headings in place.
@@ -96,16 +108,18 @@ function auditDrowningMapPins() {
   audit.setFrozenRows(0);
   audit.getRange('A1:P5').breakApart();
   audit.clear();
-  audit.getRange('A1:P1').merge().setValue('NATIONAL DROWNING RISK MAPPING — PIN QUALITY AUDIT')
+  if(audit.getMaxRows()<output.length+6) audit.insertRowsAfter(audit.getMaxRows(),output.length+6-audit.getMaxRows());
+  if(audit.getMaxColumns()<16) audit.insertColumnsAfter(audit.getMaxColumns(),16-audit.getMaxColumns());
+  audit.getRange('A1').setValue('NATIONAL DROWNING RISK MAPPING — PIN QUALITY AUDIT')
     .setBackground('#243B83').setFontColor('#FFFFFF').setFontSize(16).setFontWeight('bold');
-  audit.getRange('A2:P2').merge().setValue('Read-only review list. Correct coordinates only in Dashboard Data. This audit does not move or remove pins.')
+  audit.getRange('A2').setValue('Read-only review list. Correct coordinates only in Dashboard Data. This audit does not move or remove pins.')
     .setFontColor('#33415C');
-  audit.getRange('A3:P3').merge().setValue(
+  audit.getRange('A3').setValue(
     'Records: '+records.length+' | High: '+high+' | Medium: '+medium+' | Low: '+low+
     ' | No automatic flag: '+unflagged+' (NOT automatically verified).');
-  audit.getRange('A4:P4').merge().setValue(
+  audit.getRange('A4').setValue(
     'District-boundary test: '+boundary.note+'. Translation errors and exact riverbank positions require local verification.');
-  audit.getRange('A5:P5').merge().setValue(
+  audit.getRange('A5').setValue(
     'Priority HIGH = administrative mismatch / outside Sri Lanka; MEDIUM = shared coordinates or questionable geocoding; LOW = incomplete/vague locality.');
   const header=['Priority','Location ID','Original location name','District','DS division','GN division',
     'Latitude','Longitude','Why flagged','Geocoding status','Open pin in Google Maps',
@@ -114,7 +128,7 @@ function auditDrowningMapPins() {
     .setBackground('#527DD3').setFontColor('#FFFFFF');
   if(output.length)audit.getRange(7,1,output.length,16).setValues(output);
   audit.setFrozenRows(6);
-  // Keep rows frozen, but not columns: the title spans A:P.
+  // No frozen columns or merged title cells in this diagnostic version.
   audit.getRange(7,7,Math.max(1,output.length),2).setNumberFormat('0.000000');
   audit.getRange(1,1,Math.max(7,output.length+6),16).setVerticalAlignment('middle');
   const widths=[145,140,280,140,165,180,100,100,340,160,300,160,135,300,200,300];
@@ -126,6 +140,7 @@ function auditDrowningMapPins() {
     SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('LOW').setBackground('#EAF2FF').setFontColor('#243B83').setRanges([priorityRange]).build()
   ];
   audit.setConditionalFormatRules(rules);
+  SpreadsheetApp.flush();
   ss.setActiveSheet(audit);
   console.log('Audit completed. '+records.length+' records; '+high+' high, '+medium+' medium, '+low+' low.');
   console.log('District check: '+boundary.note);
