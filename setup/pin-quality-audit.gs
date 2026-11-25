@@ -59,7 +59,11 @@ function auditDrowningMapPins() {
         if(actual.length){
           const expected=districtNormalize(r.district);
           const matches=actual.some(s=>districtNormalize(s)===expected);
-          if(!matches)flag('DISTRICT MISMATCH: PIN INSIDE '+actual.join('/'),3);
+          if(!matches){
+            const expectedKnown=boundary.features.some(f=>districtNormalize(f.district)===expected);
+            if(expectedKnown)flag('DISTRICT MISMATCH: PIN INSIDE '+actual.join('/'),3);
+            else flag('DISTRICT NAME NOT RECOGNISED BY BOUNDARY DATA — CHECK',2);
+          }
         } else flag('OUTSIDE ALL AVAILABLE DISTRICT POLYGONS — CHECK',2);
       }
     }
@@ -87,6 +91,10 @@ function auditDrowningMapPins() {
   output.sort((a,b)=>sortValue(a)-sortValue(b));
   let audit=ss.getSheetByName('PIN QA');
   if(!audit)audit=ss.insertSheet('PIN QA');
+  // A previous failed run may have left merged headings in place.
+  audit.setFrozenColumns(0);
+  audit.setFrozenRows(0);
+  audit.getRange('A1:P5').breakApart();
   audit.clear();
   audit.getRange('A1:P1').merge().setValue('NATIONAL DROWNING RISK MAPPING — PIN QUALITY AUDIT')
     .setBackground('#243B83').setFontColor('#FFFFFF').setFontSize(16).setFontWeight('bold');
@@ -106,7 +114,7 @@ function auditDrowningMapPins() {
     .setBackground('#527DD3').setFontColor('#FFFFFF');
   if(output.length)audit.getRange(7,1,output.length,16).setValues(output);
   audit.setFrozenRows(6);
-  audit.setFrozenColumns(3);
+  // Keep rows frozen, but not columns: the title spans A:P.
   audit.getRange(7,7,Math.max(1,output.length),2).setNumberFormat('0.000000');
   audit.getRange(1,1,Math.max(7,output.length+6),16).setVerticalAlignment('middle');
   const widths=[145,140,280,140,165,180,100,100,340,160,300,160,135,300,200,300];
@@ -126,25 +134,40 @@ function auditDrowningMapPins() {
 
 // Returns empty polygons on service failure; the audit still works.
 function loadDrowningDistrictBoundaries_() {
-  const endpoint='https://gisapps.nsdi.gov.lk/server/rest/services/BaseMap/BaseMap/MapServer/3/query?'+
-    'where=1%3D1&outFields=*&returnGeometry=true&outSR=4326&geometryPrecision=4&f=geojson';
-  try {
-    const response=UrlFetchApp.fetch(endpoint,{muteHttpExceptions:true,followRedirects:true,timeout:15000});
-    if(response.getResponseCode()!==200)throw new Error('HTTP '+response.getResponseCode());
-    const geo=JSON.parse(response.getContentText());
-    if(!Array.isArray(geo.features))throw new Error('No GeoJSON features');
-    const features=geo.features.map(f=>{
-      const p=f.properties||{};
-      const district=['district_name','DISTRICT_NAME','District','district','dist_name',
-        'DIST_NAME','ADM2_EN','NAME_2','name','Name'].map(k=>p[k]).find(Boolean);
-      return {district:String(district||''),geometry:f.geometry};
-    }).filter(f=>f.district&&f.geometry);
-    if(features.length<20)throw new Error('Insufficient named district polygons: '+features.length);
-    return {features,note:features.length+' district boundary features loaded from NSDI'};
-  }catch(error){
-    console.warn('District polygon test skipped. '+error);
-    return {features:[],note:'Unavailable at time of audit — district mismatch flags not checked; retry later'};
+  const sources=[
+    {
+      name:'NSDI Sri Lanka',
+      url:'https://gisapps.nsdi.gov.lk/server/rest/services/BaseMap/BaseMap/MapServer/3/query?where=1%3D1&outFields=*&returnGeometry=true&outSR=4326&geometryPrecision=4&f=geojson'
+    },
+    {
+      name:'geoBoundaries gbOpen LKA ADM2 (simplified; OpenStreetMap/Wambacher, ODbL 1.0; boundary vintage 2017)',
+      url:'https://github.com/wmgeolab/geoBoundaries/raw/9469f09/releaseData/gbOpen/LKA/ADM2/geoBoundaries-LKA-ADM2_simplified.geojson'
+    }
+  ];
+  const normalize=s=>String(s||'').toLowerCase().replace(/district|දිස්ත්‍රික්කය|மாவட்டம்/g,'')
+    .replace(/moneragala/g,'monaragala').replace(/[^a-z]/g,'');
+  for(const source of sources){
+    try{
+      const response=UrlFetchApp.fetch(source.url,{muteHttpExceptions:true,followRedirects:true});
+      if(response.getResponseCode()!==200)throw new Error('HTTP '+response.getResponseCode());
+      const body=response.getContentText().trim();
+      if(!body.startsWith('{'))throw new Error('Response is not JSON (possibly a login or error page)');
+      const geo=JSON.parse(body);
+      if(!Array.isArray(geo.features))throw new Error('No GeoJSON features');
+      const features=geo.features.map(f=>{
+        const p=f.properties||{};
+        const district=['district_name','DISTRICT_NAME','District','district','dist_name',
+          'DIST_NAME','ADM2_EN','NAME_2','shapeName','name','Name'].map(k=>p[k]).find(Boolean);
+        return {district:String(district||''),geometry:f.geometry};
+      }).filter(f=>f.district&&f.geometry&&['Polygon','MultiPolygon'].includes(f.geometry.type));
+      const names=new Set(features.map(f=>normalize(f.district)).filter(Boolean));
+      if(names.size!==25)throw new Error('Expected 25 unique named district polygons, got '+names.size);
+      return {features,note:features.length+' features for 25 districts loaded from '+source.name};
+    }catch(error){
+      console.warn(source.name+' unavailable: '+error.message);
+    }
   }
+  return {features:[],note:'Both boundary sources unavailable — district mismatch checks skipped; other checks completed'};
 }
 
 // WGS84 GeoJSON coordinates are always [longitude,latitude]. Supports holes.
